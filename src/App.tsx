@@ -1,24 +1,61 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import logo from "./logo.svg";
+import { createClient } from "graphql-ws";
+import "./App.css";
+import _ from "lodash";
 
 function App() {
+  const client = createClient({
+    url: "ws://localhost:4000/graphql",
+  });
+
+  // subscription
+  (async () => {
+    const onNext = (data: any) => {
+      console.log(data.data.greetings);
+      /* handle incoming values */
+    };
+
+    let unsubscribe = () => {
+      /* complete the subscription */
+    };
+
+    await new Promise((resolve: any, reject) => {
+      unsubscribe = client.subscribe(
+        {
+          query: "subscription { greetings }",
+        },
+        {
+          next: onNext,
+          error: reject,
+          complete: resolve,
+        }
+      );
+    });
+  })();
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <input
+        type="text"
+        onChange={_.debounce((e) => {
+          const x = e.target.value;
+          let result;
+          new Promise((resolve, reject) => {
+            let result: any;
+            client.subscribe(
+              {
+                query: `mutation { setName(x: "${x}") }`,
+              },
+              {
+                next: ({ data }) => (result = data),
+                error: reject,
+                complete: () => resolve(result),
+              }
+            );
+          });
+        }, 500)}
+      />
     </div>
   );
 }
