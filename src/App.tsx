@@ -1,64 +1,48 @@
 import React, { useEffect, useState } from "react";
-import logo from "./logo.svg";
 import { createClient } from "graphql-ws";
-import "./App.css";
 import _ from "lodash";
+import "./App.css";
 
 const client = createClient({
   url: "ws://localhost:4000/graphql",
 });
 
 function App() {
-  const [x, setX] = useState("");
+  const [greeting, setGreeting] = useState("");
+
   useEffect(() => {
-    // subscription
-    (async () => {
-      const onNext = (data: any) => {
-        setX(data.data.greetings);
-        /* handle incoming values */
-      };
-
-      let unsubscribe = () => {
-        /* complete the subscription */
-      };
-
-      await new Promise((resolve: any, reject) => {
-        unsubscribe = client.subscribe(
-          {
-            query: "subscription { greetings }",
-          },
-          {
-            next: onNext,
-            error: reject,
-            complete: resolve,
-          }
-        );
-      });
-    })();
+    client.subscribe(
+      {
+        query: "subscription { greetings }",
+      },
+      {
+        next: (data: any) => {
+          /* handle incoming values */
+          setGreeting(data.data.greetings);
+        },
+        error: (e) => console.log(e),
+        complete: () => {},
+      }
+    );
   }, []);
 
   const onChange = _.debounce((e) => {
-    const x = e.target.value;
-    let result;
-    new Promise((resolve, reject) => {
-      let result: any;
-      client.subscribe(
-        {
-          query: `mutation { setName(x: "${x}") }`,
-        },
-        {
-          next: ({ data }) => (result = data),
-          error: reject,
-          complete: () => resolve(result),
-        }
-      );
-    });
+    client.subscribe(
+      {
+        query: `mutation { setName(x: "${e.target.value}") }`,
+      },
+      {
+        next: ({ data }) => console.log(data),
+        error: (e) => console.log(e),
+        complete: () => {},
+      }
+    );
   }, 500);
 
   return (
     <div className="App">
       <input type="text" onChange={onChange} />
-      <div>{x}</div>
+      <div>{greeting}</div>
     </div>
   );
 }

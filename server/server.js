@@ -5,17 +5,7 @@ import { PubSub } from "graphql-subscriptions";
 
 const pubsub = new PubSub();
 
-/**
- * Construct a GraphQL schema and define the necessary resolvers.
- *
- * type Query {
- *   hello: String
- * }
- * type Subscription {
- *   greetings: String
- * }
- */
-export const schema = new GraphQLSchema({
+const schema = new GraphQLSchema({
   mutation: new GraphQLObjectType({
     name: "Mutation",
     fields: {
@@ -25,7 +15,7 @@ export const schema = new GraphQLSchema({
           x: { type: GraphQLString },
         },
         resolve: (_, args) => {
-          pubsub.publish("GREETINGS", { greetings: 'Hello ' + args.x });
+          pubsub.publish("GREETINGS", { greetings: "Hello " + args.x });
           return "success";
         },
       },
